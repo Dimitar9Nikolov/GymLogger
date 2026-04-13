@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace GymLogger.Models;
 
@@ -16,6 +17,7 @@ public class PersonalRecord
     [ForeignKey(nameof(ExerciseId))]
     public Exercise Exercise { get; set; } = null!;
 
+    [Precision(6, 2)]
     public decimal WeightKg { get; set; }
     public int Reps { get; set; }
     public DateTime AchievedOn { get; set; }

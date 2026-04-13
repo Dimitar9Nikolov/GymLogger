@@ -13,7 +13,9 @@ public class ProgramDay
     public TrainingProgram Program { get; set; } = null!;
 
     public int DayNumber { get; set; }
+    [MaxLength(100)]
     public string Name { get; set; } = null!;
+    [MaxLength(1000)]
     public string? Notes { get; set; }
 
     public ICollection<ProgramDayExercise> ProgramDayExercises { get; set; } = new List<ProgramDayExercise>();

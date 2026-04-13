@@ -8,7 +8,9 @@ public class TrainingProgram
 {
     [Key]
     public int Id { get; set; }
+    [MaxLength(100)]
     public string Title { get; set; } = null!;
+    [MaxLength(1000)]
     public string? Description { get; set; }
     public int DurationWeeks { get; set; }
     public Difficulty Difficulty { get; set; }

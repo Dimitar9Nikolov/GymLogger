@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace GymLogger.Models;
 
@@ -18,7 +19,9 @@ public class WorkoutExercise
 
     public int Sets { get; set; }
     public int Reps { get; set; }
+    [Precision(6, 2)]
     public decimal WeightKg { get; set; }
+    [MaxLength(500)]
     public string? Notes { get; set; }
     public int Order { get; set; }
 }

@@ -7,7 +7,9 @@ public class Workout
 {
     [Key]
     public int Id { get; set; }
+    [MaxLength(100)]
     public string Title { get; set; } = null!;
+    [MaxLength(1000)]
     public string? Notes { get; set; }
     public DateTime Date { get; set; }
     public int DurationMinutes { get; set; }

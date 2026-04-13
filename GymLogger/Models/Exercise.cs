@@ -8,9 +8,13 @@ public class Exercise
 {
     [Key]
     public int Id { get; set; }
+    [MaxLength(100)]
     public string Name { get; set; } = null!;
+    [MaxLength(500)]
     public string? Description { get; set; }
+    [MaxLength(2000)]
     public string? Instructions { get; set; }
+    [MaxLength(2048)]
     public string? ImageUrl { get; set; }
     public MuscleGroup MuscleGroup { get; set; }
     public Difficulty Difficulty { get; set; }
