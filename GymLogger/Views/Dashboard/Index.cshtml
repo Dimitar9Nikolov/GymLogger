@@ -1,0 +1,167 @@
+@model GymLogger.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Welcome back, @Model.UserName!</h2>
+    <a asp-controller="Workout" asp-action="Create" class="btn btn-primary">+ Log Workout</a>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="display-5 fw-bold text-primary">@Model.TotalWorkouts</div>
+                <div class="text-muted small">Total Workouts</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="display-5 fw-bold text-success">@Model.TotalExercisesLogged</div>
+                <div class="text-muted small">Sets Logged</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="display-5 fw-bold text-warning">@Model.RecentPersonalRecords.Count</div>
+                <div class="text-muted small">Recent PRs</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                @if (Model.ActiveProgram != null)
+                {
+                    <div class="display-5 fw-bold text-info">1</div>
+                    <div class="text-muted small">Active Program</div>
+                }
+                else
+                {
+                    <div class="display-5 fw-bold text-secondary">0</div>
+                    <div class="text-muted small">Active Program</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Workouts -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Recent Workouts</span>
+                <a asp-controller="Workout" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.RecentWorkouts.Any())
+                {
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Workout</th>
+                                <th>Date</th>
+                                <th>Duration</th>
+                                <th>Exercises</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var workout in Model.RecentWorkouts)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-controller="Workout" asp-action="Details" asp-route-id="@workout.Id"
+                                           class="text-decoration-none fw-medium">@workout.Title</a>
+                                    </td>
+                                    <td class="text-muted">@workout.Date.ToString("MMM d")</td>
+                                    <td class="text-muted">@workout.DurationMinutes min</td>
+                                    <td class="text-muted">@workout.ExerciseCount</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-5">
+                        <p class="mb-2">No workouts logged yet.</p>
+                        <a asp-controller="Workout" asp-action="Create" class="btn btn-sm btn-primary">Log your first workout</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-lg-5 d-flex flex-column gap-4">
+
+        <!-- Active Program -->
+        <div class="card">
+            <div class="card-header fw-semibold">Active Program</div>
+            <div class="card-body">
+                @if (Model.ActiveProgram != null)
+                {
+                    <h5 class="card-title mb-1">@Model.ActiveProgram.Title</h5>
+                    @if (!string.IsNullOrEmpty(Model.ActiveProgram.Description))
+                    {
+                        <p class="text-muted small mb-2">@Model.ActiveProgram.Description</p>
+                    }
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <span class="badge bg-secondary">@Model.ActiveProgram.Difficulty</span>
+                        <span class="badge bg-info text-dark">@Model.ActiveProgram.Goal</span>
+                        <span class="badge bg-light text-dark border">@Model.ActiveProgram.DurationWeeks wks</span>
+                    </div>
+                    <small class="text-muted">Started @Model.ActiveProgram.StartDate.ToString("MMM d, yyyy")</small>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-3">
+                        <p class="mb-2">No active program.</p>
+                        <a asp-controller="TrainingProgram" asp-action="Index" class="btn btn-sm btn-outline-primary">Browse Programs</a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Recent PRs -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Recent Personal Records</span>
+                <a asp-controller="PersonalRecord" asp-action="Index" class="btn btn-sm btn-outline-secondary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.RecentPersonalRecords.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var pr in Model.RecentPersonalRecords)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-medium">@pr.ExerciseName</div>
+                                    <small class="text-muted">@pr.AchievedOn.ToString("MMM d, yyyy")</small>
+                                </div>
+                                <span class="badge bg-warning text-dark ms-2 align-self-center">
+                                    @pr.WeightKg kg &times; @pr.Reps
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-4">
+                        <p class="mb-0">No personal records yet.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>

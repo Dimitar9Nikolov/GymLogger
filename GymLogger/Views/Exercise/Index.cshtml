@@ -1,0 +1,86 @@
+@model ExerciseIndexViewModel
+@{
+    ViewData["Title"] = "Exercises";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Exercises</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Submit Exercise</a>
+</div>
+
+<!-- Filter bar -->
+<form method="get" asp-action="Index" class="row g-2 mb-4">
+    <div class="col-sm-6 col-md-5">
+        <input type="text" name="search" value="@Model.Search"
+               class="form-control" placeholder="Search by name..." />
+    </div>
+    <div class="col-sm-4 col-md-3">
+        <select name="muscleGroup" class="form-select">
+            <option value="">All muscle groups</option>
+            @foreach (MuscleGroup mg in Enum.GetValues(typeof(MuscleGroup)))
+            {
+                <option value="@mg" selected="@(Model.SelectedMuscleGroup == mg)">@mg</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        <a asp-action="Index" class="btn btn-link text-muted">Clear</a>
+    </div>
+</form>
+
+<!-- Results -->
+@{
+    ViewData["CurrentPage"] = Model.CurrentPage;
+    ViewData["TotalPages"] = Model.TotalPages;
+    ViewData["RouteValues"] = new Dictionary<string, string?>
+    {
+        ["search"] = Model.Search,
+        ["muscleGroup"] = Model.SelectedMuscleGroup?.ToString()
+    };
+}
+@if (!Model.Exercises.Any())
+{
+    <div class="text-center text-muted py-5">
+        <p class="mb-0">No exercises found. Try a different filter or submit one!</p>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 mb-4">
+        @foreach (var exercise in Model.Exercises)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(exercise.ImageUrl))
+                    {
+                        <img src="@exercise.ImageUrl" class="card-img-top"
+                             alt="@exercise.Name" style="height:160px; object-fit:cover;" />
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title mb-1">
+                            <a asp-action="Details" asp-route-id="@exercise.Id"
+                               class="text-decoration-none stretched-link">@exercise.Name</a>
+                        </h5>
+                        <div class="d-flex gap-2 mt-2">
+                            <span class="badge bg-secondary">@exercise.MuscleGroup</span>
+                            @{
+                                string diffClass = exercise.Difficulty switch
+                                {
+                                    Difficulty.Beginner => "bg-success",
+                                    Difficulty.Intermediate => "bg-warning text-dark",
+                                    Difficulty.Advanced => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @diffClass">@exercise.Difficulty</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    <partial name="_Pagination" />
+}
