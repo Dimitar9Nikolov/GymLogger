@@ -1,0 +1,84 @@
+@model ExerciseDetailsViewModel
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="text-muted text-decoration-none">&larr; Back to Exercises</a>
+</div>
+
+<div class="row g-4">
+
+    <!-- Image column (if present) -->
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <div class="col-md-4">
+            <img src="@Model.ImageUrl" alt="@Model.Name"
+                 class="img-fluid rounded shadow-sm" style="max-height:320px; object-fit:cover; width:100%;" />
+        </div>
+    }
+
+    <!-- Main content column -->
+    <div class="@(string.IsNullOrEmpty(Model.ImageUrl) ? "col-12" : "col-md-8")">
+
+        <!-- Header row: name + status badge -->
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-2">
+            <h2 class="mb-0">@Model.Name</h2>
+            @if (!Model.IsApproved)
+            {
+                <span class="badge bg-warning text-dark fs-6">Pending Approval</span>
+            }
+        </div>
+
+        <!-- Muscle group + difficulty badges -->
+        <div class="d-flex gap-2 mb-3">
+            <span class="badge bg-secondary">@Model.MuscleGroup</span>
+            @{
+                string diffClass = Model.Difficulty switch
+                {
+                    Difficulty.Beginner     => "bg-success",
+                    Difficulty.Intermediate => "bg-warning text-dark",
+                    Difficulty.Advanced     => "bg-danger",
+                    _                       => "bg-secondary"
+                };
+            }
+            <span class="badge @diffClass">@Model.Difficulty</span>
+        </div>
+
+        <!-- Submitted by -->
+        <p class="text-muted small mb-3">Submitted by <strong>@Model.CreatedByName</strong></p>
+
+        <!-- Description -->
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <p class="mb-3">@Model.Description</p>
+        }
+
+        <!-- Instructions -->
+        @if (!string.IsNullOrEmpty(Model.Instructions))
+        {
+            <h5>Instructions</h5>
+            <p class="mb-3" style="white-space: pre-line;">@Model.Instructions</p>
+        }
+
+        <!-- Action buttons -->
+        <div class="d-flex flex-wrap gap-2 mt-4">
+
+            @if (Model.CanEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
+            }
+
+            @if (Model.CanApprove)
+            {
+                <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success">Approve Exercise</button>
+                </form>
+            }
+
+        </div>
+
+    </div>
+</div>

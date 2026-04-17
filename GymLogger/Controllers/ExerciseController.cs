@@ -57,8 +57,39 @@ public class ExerciseController : Controller
         return View(viewModel);
     }
 
-    // public async Task<IActionResult> Details(int id)
-    // {
-    //     
-    // }
+    public async Task<IActionResult> Details(int id)
+    {
+        
+        var exercise = await _context.Exercises
+            .Include(e => e.CreatedBy)
+            .FirstOrDefaultAsync(e => e.Id == id);
+        
+        if (exercise == null)
+            return NotFound();
+        
+        var userId = _userManager.GetUserId(User);
+        
+        bool isOwner = exercise.CreatedById == userId;
+        bool isAdmin = User.IsInRole("Admin");
+        
+        if (!exercise.IsApproved && !isOwner && !isAdmin)
+            return Forbid();
+        
+        var viewModel = new ExerciseDetailsViewModel
+        {
+        Id = exercise.Id,
+        Name = exercise.Name,
+        Description = exercise.Description,
+        Instructions = exercise.Instructions,
+        ImageUrl = exercise.ImageUrl,
+        MuscleGroup = exercise.MuscleGroup,
+        Difficulty = exercise.Difficulty,
+        IsApproved = exercise.IsApproved,
+        CreatedByName = $"{exercise.CreatedBy.FirstName} {exercise.CreatedBy.LastName}",
+        CanEdit = isOwner || isAdmin,
+        CanApprove = isAdmin && !exercise.IsApproved
+        };
+        
+        return View(viewModel);
+    }
 }
