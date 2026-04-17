@@ -22,7 +22,7 @@ public class Exercise
 
     public string CreatedById { get; set; } = null!;
     [ForeignKey(nameof(CreatedById))]
-    public ApplicationUser CreatedBy { get; set; } = null!;
+    public ApplicationUser? CreatedBy { get; set; } = null!;
 
     public ICollection<WorkoutExercise> WorkoutExercises { get; set; } = new List<WorkoutExercise>();
     public ICollection<PersonalRecord> PersonalRecords { get; set; } = new List<PersonalRecord>();

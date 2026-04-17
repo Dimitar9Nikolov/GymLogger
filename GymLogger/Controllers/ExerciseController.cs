@@ -4,6 +4,7 @@ using GymLogger.Models.Enums;
 using GymLogger.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymLogger.Controllers;
@@ -77,19 +78,63 @@ public class ExerciseController : Controller
         
         var viewModel = new ExerciseDetailsViewModel
         {
-        Id = exercise.Id,
-        Name = exercise.Name,
-        Description = exercise.Description,
-        Instructions = exercise.Instructions,
-        ImageUrl = exercise.ImageUrl,
-        MuscleGroup = exercise.MuscleGroup,
-        Difficulty = exercise.Difficulty,
-        IsApproved = exercise.IsApproved,
-        CreatedByName = $"{exercise.CreatedBy.FirstName} {exercise.CreatedBy.LastName}",
-        CanEdit = isOwner || isAdmin,
-        CanApprove = isAdmin && !exercise.IsApproved
+            Id = exercise.Id,
+            Name = exercise.Name,
+            Description = exercise.Description,
+            Instructions = exercise.Instructions,
+            ImageUrl = exercise.ImageUrl,
+            MuscleGroup = exercise.MuscleGroup,
+            Difficulty = exercise.Difficulty,
+            IsApproved = exercise.IsApproved,
+            CreatedByName = $"{exercise.CreatedBy.FirstName} {exercise.CreatedBy.LastName}",
+            CanEdit = isOwner || isAdmin,
+            CanApprove = isAdmin && !exercise.IsApproved
         };
         
         return View(viewModel);
+    }
+
+    [HttpGet]
+    public IActionResult Create()
+    {
+        var exerciseViewModel = new ExerciseFormViewModel();
+        
+        exerciseViewModel.MuscleGroupOptions = new SelectList(
+            Enum.GetValues(typeof(MuscleGroup)),
+            exerciseViewModel.MuscleGroup
+        );
+
+        exerciseViewModel.DifficultyOptions = new SelectList(
+            Enum.GetValues(typeof(Difficulty)),
+            exerciseViewModel.Difficulty
+        );
+        
+        return View(exerciseViewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(ExerciseFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+        
+        var exercise = new Exercise
+        {
+            Name = model.Name,
+            Description = model.Description,
+            Instructions = model.Instructions,
+            ImageUrl = model.ImageUrl,
+            MuscleGroup = model.MuscleGroup,
+            Difficulty = model.Difficulty,
+            CreatedBy = await _userManager.GetUserAsync(User) ?? throw new UnauthorizedAccessException(),
+            IsApproved = false
+        };
+        
+        _context.Exercises.Add(exercise);
+        await _context.SaveChangesAsync();
+        
+        TempData["Success"] = "Exercise submitted! It will appear publicly once approved.";
+        return RedirectToAction(nameof(Details), new { id = exercise.Id });
     }
 }

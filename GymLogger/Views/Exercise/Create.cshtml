@@ -1,0 +1,86 @@
+@model ExerciseFormViewModel
+@{
+    ViewData["Title"] = "Submit Exercise";
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="text-muted text-decoration-none">&larr; Back to Exercises</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <h2 class="mb-1">Submit an Exercise</h2>
+        <p class="text-muted small mb-4">Your exercise will be reviewed by an admin before appearing publicly.</p>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Name -->
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" placeholder="e.g. Barbell Bench Press" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <!-- Muscle Group + Difficulty side by side -->
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label asp-for="MuscleGroup" class="form-label"></label>
+                    <select asp-for="MuscleGroup" asp-items="Model.MuscleGroupOptions" class="form-select"></select>
+                    <span asp-validation-for="MuscleGroup" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-6">
+                    <label asp-for="Difficulty" class="form-label"></label>
+                    <select asp-for="Difficulty" asp-items="Model.DifficultyOptions" class="form-select"></select>
+                    <span asp-validation-for="Difficulty" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"
+                          placeholder="Brief summary of the exercise..."></textarea>
+                <div class="form-text">Max 500 characters.</div>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <!-- Instructions -->
+            <div class="mb-3">
+                <label asp-for="Instructions" class="form-label"></label>
+                <textarea asp-for="Instructions" class="form-control" rows="5"
+                          placeholder="Step-by-step instructions..."></textarea>
+                <div class="form-text">Max 2000 characters. Each step on a new line works well.</div>
+                <span asp-validation-for="Instructions" class="text-danger small"></span>
+            </div>
+
+            <!-- Image URL -->
+            <div class="mb-4">
+                <label asp-for="ImageUrl" class="form-label"></label>
+                <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
+                <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Submit Exercise</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
