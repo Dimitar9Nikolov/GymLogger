@@ -29,6 +29,14 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-controller="Exercise" asp-action="Index">Exercises</a>
                     </li>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-warning fw-semibold" asp-controller="Exercise" asp-action="Pending">
+                                Pending Approvals
+                            </a>
+                        </li>
+                    }
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>

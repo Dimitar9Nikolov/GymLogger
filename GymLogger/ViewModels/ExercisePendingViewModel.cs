@@ -2,11 +2,11 @@ using GymLogger.Models.Enums;
 
 namespace GymLogger.ViewModels;
 
-public class ExerciseListItemViewModel
+public class ExercisePendingViewModel
 {
     public int Id { get; set; }
-    public required string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
     public MuscleGroup MuscleGroup { get; set; }
     public Difficulty Difficulty { get; set; }
-    public string? ImageUrl { get; set; }
+    public string SubmittedBy { get; set; } = string.Empty;
 }

@@ -1,0 +1,98 @@
+@model List<ExercisePendingViewModel>
+@{
+    ViewData["Title"] = "Pending Approvals";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">Pending Approvals</h2>
+        <p class="text-muted small mb-0">Exercises submitted by users waiting for review.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to Exercises</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">
+            <h5 class="mb-1">All clear!</h5>
+            <p class="mb-0">No exercises are waiting for approval.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-header fw-semibold">
+            @Model.Count exercise@(Model.Count == 1 ? "" : "s") pending
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Muscle Group</th>
+                        <th>Difficulty</th>
+                        <th>Submitted By</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var exercise in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@exercise.Id"
+                                   class="fw-medium text-decoration-none">
+                                    @exercise.Name
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">@exercise.MuscleGroup</span>
+                            </td>
+                            <td>
+                                @{
+                                    string diffClass = exercise.Difficulty switch
+                                    {
+                                        Difficulty.Beginner     => "bg-success",
+                                        Difficulty.Intermediate => "bg-warning text-dark",
+                                        Difficulty.Advanced     => "bg-danger",
+                                        _                       => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @diffClass">@exercise.Difficulty</span>
+                            </td>
+                            <td class="text-muted">@exercise.SubmittedBy</td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+
+                                    <!-- Approve -->
+                                    <form asp-action="Approve" asp-route-id="@exercise.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                    </form>
+
+                                    <!-- Reject -->
+                                    <form asp-action="Reject" asp-route-id="@exercise.Id" method="post"
+                                          onsubmit="return confirm('Reject and permanently delete @exercise.Name?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

@@ -2,6 +2,7 @@ using GymLogger.Data;
 using GymLogger.Models;
 using GymLogger.Models.Enums;
 using GymLogger.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -99,15 +100,7 @@ public class ExerciseController : Controller
     {
         var exerciseViewModel = new ExerciseFormViewModel();
         
-        exerciseViewModel.MuscleGroupOptions = new SelectList(
-            Enum.GetValues(typeof(MuscleGroup)),
-            exerciseViewModel.MuscleGroup
-        );
-
-        exerciseViewModel.DifficultyOptions = new SelectList(
-            Enum.GetValues(typeof(Difficulty)),
-            exerciseViewModel.Difficulty
-        );
+        RepopulateSelectLists(exerciseViewModel);
         
         return View(exerciseViewModel);
     }
@@ -136,5 +129,132 @@ public class ExerciseController : Controller
         
         TempData["Success"] = "Exercise submitted! It will appear publicly once approved.";
         return RedirectToAction(nameof(Details), new { id = exercise.Id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var exercise = await _context.Exercises.FindAsync(id);
+        if (exercise == null)
+            return NotFound();
+
+
+        var userId = _userManager.GetUserId(User);
+        if (exercise.CreatedById != userId)
+            return Forbid();
+
+      
+        var viewModel = new ExerciseFormViewModel
+        {
+            Id = exercise.Id,
+            Name = exercise.Name,
+            Description = exercise.Description,
+            Instructions = exercise.Instructions,
+            ImageUrl = exercise.ImageUrl,
+            MuscleGroup = exercise.MuscleGroup,
+            Difficulty = exercise.Difficulty
+        };
+
+        RepopulateSelectLists(viewModel);
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, ExerciseFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            RepopulateSelectLists(model);
+            return View(model);
+        }
+
+        var exercise = await _context.Exercises.FindAsync(id);
+        if (exercise == null)
+            return NotFound();
+
+        var userId = _userManager.GetUserId(User);
+        if (exercise.CreatedById != userId)
+            return Forbid();
+
+        exercise.Name = model.Name;
+        exercise.Description = model.Description;
+        exercise.Instructions = model.Instructions;
+        exercise.ImageUrl = model.ImageUrl;
+        exercise.MuscleGroup = model.MuscleGroup;
+        exercise.Difficulty = model.Difficulty;
+
+        exercise.IsApproved = false;
+
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Your changes have been submitted and are pending admin approval.";
+        return RedirectToAction(nameof(Details), new { id = exercise.Id });
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Pending()
+    {
+        var pending = await _context.Exercises
+            .Include(e => e.CreatedBy)
+            .Where(e => !e.IsApproved)
+            .OrderBy(e => e.Name)
+            .Select(e => new ExercisePendingViewModel
+            {
+                Id = e.Id,
+                Name = e.Name,
+                MuscleGroup = e.MuscleGroup,
+                Difficulty = e.Difficulty,
+                SubmittedBy = e.CreatedBy.FirstName + " " + e.CreatedBy.LastName
+            })
+            .ToListAsync();
+
+        return View(pending);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Approve(int id)
+    {
+        var exercise = await _context.Exercises.FindAsync(id);
+        if (exercise == null)
+            return NotFound();
+
+        exercise.IsApproved = true;
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = $"{exercise.Name} has been approved and is now public.";
+        return RedirectToAction(nameof(Pending));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Reject(int id)
+    {
+        var exercise = await _context.Exercises.FindAsync(id);
+        if (exercise == null)
+            return NotFound();
+
+        _context.Exercises.Remove(exercise);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = $"{exercise.Name} has been rejected and removed.";
+        return RedirectToAction(nameof(Pending));
+    }
+
+    private void RepopulateSelectLists(ExerciseFormViewModel model)
+    {
+        model.MuscleGroupOptions = new SelectList(
+                Enum.GetValues(typeof(MuscleGroup)),
+                model.MuscleGroup
+            );
+        model.DifficultyOptions = new SelectList(
+                Enum.GetValues(typeof(Difficulty)),
+                model.Difficulty
+            );
     }
 }
