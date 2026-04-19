@@ -52,11 +52,20 @@ else
         {
             <div class="col">
                 <div class="card h-100">
-                    @if (!string.IsNullOrEmpty(exercise.ImageUrl))
-                    {
-                        <img src="@exercise.ImageUrl" class="card-img-top"
-                             alt="@exercise.Name" style="height:160px; object-fit:cover;" />
-                    }
+                    <!-- Fixed-height image slot — always rendered so all cards stay the same size -->
+                    <div style="height:180px; overflow:hidden; background:#f0f0f0;"
+                         class="d-flex align-items-center justify-content-center rounded-top">
+                        @if (!string.IsNullOrEmpty(exercise.ImageUrl))
+                        {
+                            <img src="@exercise.ImageUrl"
+                                 alt="@exercise.Name"
+                                 style="width:100%; height:100%; object-fit:contain;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted" style="font-size:2.5rem;">&#127947;</span>
+                        }
+                    </div>
                     <div class="card-body">
                         <h5 class="card-title mb-1">
                             <a asp-action="Details" asp-route-id="@exercise.Id"
@@ -67,10 +76,10 @@ else
                             @{
                                 string diffClass = exercise.Difficulty switch
                                 {
-                                    Difficulty.Beginner => "bg-success",
+                                    Difficulty.Beginner     => "bg-success",
                                     Difficulty.Intermediate => "bg-warning text-dark",
-                                    Difficulty.Advanced => "bg-danger",
-                                    _ => "bg-secondary"
+                                    Difficulty.Advanced     => "bg-danger",
+                                    _                       => "bg-secondary"
                                 };
                             }
                             <span class="badge @diffClass">@exercise.Difficulty</span>

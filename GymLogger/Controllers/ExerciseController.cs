@@ -31,7 +31,7 @@ public class ExerciseController : Controller
         if(muscleGroup.HasValue)
             query = query.Where(e => e.MuscleGroup == muscleGroup.Value);
 
-        int pageSize = 10;
+        int pageSize = 9;
         int totalExercises = await query.CountAsync();
         
         var exercises = await query
@@ -244,6 +244,51 @@ public class ExerciseController : Controller
 
         TempData["Success"] = $"{exercise.Name} has been rejected and removed.";
         return RedirectToAction(nameof(Pending));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var exercise = await _context.Exercises.FindAsync(id);
+        if (exercise == null)            
+            return NotFound();
+
+        var userId = _userManager.GetUserId(User);
+        bool isOwner = exercise.CreatedById == userId;
+        bool isAdmin = User.IsInRole("Admin");
+
+        if (!isOwner && !isAdmin)
+            return Forbid();
+
+        return View(exercise);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var exercise = await _context.Exercises.FindAsync(id);
+        if (exercise == null)
+            return NotFound();
+
+        var userId = _userManager.GetUserId(User);
+        bool isOwner = exercise.CreatedById == userId;
+        bool isAdmin = User.IsInRole("Admin");
+        if (!isOwner && !isAdmin)
+            return Forbid();
+
+        bool isReferenced = await _context.WorkoutExercises.AnyAsync(we => we.ExerciseId == id);
+        if (isReferenced)
+        {
+            TempData["Error"] = "Cannot delete this exercise because it is used in one or more workouts. Please remove it from those workouts first.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        
+        _context.Exercises.Remove(exercise);
+        await _context.SaveChangesAsync();
+        
+        TempData["Success"] = $"{exercise.Name} has been deleted.";
+        return RedirectToAction(nameof(Index));
     }
 
     private void RepopulateSelectLists(ExerciseFormViewModel model)
