@@ -1,0 +1,47 @@
+@model GymLogger.Models.Workout
+@{
+    ViewData["Title"] = "Delete Workout";
+}
+
+<div class="mb-3">
+    <a asp-action="Details" asp-route-id="@Model.Id" class="text-muted text-decoration-none">&larr; Back to Workout</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white fw-semibold">
+                Confirm Deletion
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">@Model.Title</h5>
+                <div class="d-flex gap-3 text-muted small mb-3">
+                    <span>📅 @Model.Date.ToString("dd MMM yyyy")</span>
+                    <span>⏱ @Model.DurationMinutes min</span>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <p class="text-muted small mb-3" style="white-space: pre-line;">@Model.Notes</p>
+                }
+
+                <p class="text-muted mb-4">
+                    Are you sure you want to permanently delete this workout?
+                    All exercises and sets logged in this workout will be removed.
+                    This action cannot be undone.
+                </p>
+
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        <a asp-action="Details" asp-route-id="@Model.Id"
+                           class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

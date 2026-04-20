@@ -17,11 +17,9 @@ public class WorkoutExercise
     [ForeignKey(nameof(ExerciseId))]
     public Exercise Exercise { get; set; } = null!;
 
-    public int Sets { get; set; }
-    public int Reps { get; set; }
-    [Precision(6, 2)]
-    public decimal WeightKg { get; set; }
     [MaxLength(500)]
     public string? Notes { get; set; }
     public int Order { get; set; }
+
+    public ICollection<WorkoutSet> Sets { get; set; } = new List<WorkoutSet>();
 }

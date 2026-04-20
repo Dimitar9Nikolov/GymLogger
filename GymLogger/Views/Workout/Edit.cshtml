@@ -1,0 +1,256 @@
+@model WorkoutFormViewModel
+@{
+    ViewData["Title"] = "Edit Workout";
+}
+
+<div class="mb-3">
+    <a asp-action="Details" asp-route-id="@Model.Id" class="text-muted text-decoration-none">&larr; Back to Workout</a>
+</div>
+
+<h2 class="mb-4">Edit Workout</h2>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <!-- Workout header fields -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">Workout Details</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label asp-for="Date" class="form-label"></label>
+                    <input asp-for="Date" class="form-control" type="date" />
+                    <span asp-validation-for="Date" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-6">
+                    <label asp-for="DurationMinutes" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="DurationMinutes" class="form-control" type="number" min="1" max="1440" />
+                        <span class="input-group-text">min</span>
+                    </div>
+                    <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+                </div>
+            </div>
+            <div>
+                <label asp-for="Notes" class="form-label"></label>
+                <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Notes" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pre-rendered existing exercise cards -->
+    <div class="mb-4" id="exerciseList">
+        @for (int ei = 0; ei < Model.Exercises.Count; ei++)
+        {
+            var exercise = Model.Exercises[ei];
+            <div class="card mb-3 exercise-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <select name="Exercises[@ei].ExerciseId" class="form-select form-select-sm w-auto"
+                            style="min-width:220px;">
+                        <option value="">Select exercise...</option>
+                        @if (Model.ExerciseOptions != null)
+                        {
+                            @foreach (var opt in Model.ExerciseOptions)
+                            {
+                                @if (opt.Value == exercise.ExerciseId.ToString())
+                                {
+                                    <option value="@opt.Value" selected>
+                                        @opt.Text
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@opt.Value">
+                                        @opt.Text
+                                    </option>
+                                }
+                            }
+                        }
+                    </select>
+                    <button type="button" class="btn btn-sm btn-outline-danger removeExercise">Remove exercise</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom">
+                        <div class="col-1">Set</div>
+                        <div class="col-3">Reps</div>
+                        <div class="col-3">Weight (kg)</div>
+                        <div class="col-5"></div>
+                    </div>
+                    <div class="set-list px-3 py-2">
+                        @for (int si = 0; si < exercise.Sets.Count; si++)
+                        {
+                            var set = exercise.Sets[si];
+                            <div class="set-row row g-2 align-items-center mb-2">
+                                <div class="col-1 text-muted small set-number fw-semibold">@(si + 1)</div>
+                                <div class="col-3">
+                                    <input type="number" name="Exercises[@ei].Sets[@si].Reps"
+                                           value="@set.Reps"
+                                           class="form-control form-control-sm" min="1" max="200" />
+                                </div>
+                                <div class="col-3">
+                                    <input type="number" name="Exercises[@ei].Sets[@si].WeightKg"
+                                           value="@set.WeightKg"
+                                           class="form-control form-control-sm" min="0" step="0.5" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-sm btn-link text-danger removeSet p-0">Remove</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="px-3 pb-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary addSet">+ Add Set</button>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <label class="form-label small text-muted mb-1">Notes (optional)</label>
+                    <input type="text" name="Exercises[@ei].Notes" value="@exercise.Notes"
+                           class="form-control form-control-sm"
+                           placeholder="e.g. paused reps, close grip..." />
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+        <button type="button" id="addExercise" class="btn btn-outline-primary">+ Add Exercise</button>
+    </div>
+
+    <div id="emptyState" class="text-center text-muted py-3 mb-4 @(Model.Exercises.Any() ? "d-none" : "")">
+        <p class="mb-0 small">No exercises. Click <strong>+ Add Exercise</strong> to add one.</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+
+<!-- Templates for JS-added rows (same as Create) -->
+<template id="exerciseTemplate">
+    <div class="card mb-3 exercise-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <select name="Exercises[__ei__].ExerciseId" class="form-select form-select-sm w-auto"
+                    style="min-width:220px;">
+                <option value="">Select exercise...</option>
+                @if (Model.ExerciseOptions != null)
+                {
+                    @foreach (SelectListItem opt in Model.ExerciseOptions)
+                    {
+                        <option value="@opt.Value">@opt.Text</option>
+                    }
+                }
+            </select>
+            <button type="button" class="btn btn-sm btn-outline-danger removeExercise">Remove exercise</button>
+        </div>
+        <div class="card-body p-0">
+            <div class="row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom">
+                <div class="col-1">Set</div>
+                <div class="col-3">Reps</div>
+                <div class="col-3">Weight (kg)</div>
+                <div class="col-5"></div>
+            </div>
+            <div class="set-list px-3 py-2"></div>
+            <div class="px-3 pb-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary addSet">+ Add Set</button>
+            </div>
+        </div>
+        <div class="card-footer">
+            <label class="form-label small text-muted mb-1">Notes (optional)</label>
+            <input type="text" name="Exercises[__ei__].Notes" class="form-control form-control-sm"
+                   placeholder="e.g. paused reps, close grip..." />
+        </div>
+    </div>
+</template>
+
+<template id="setTemplate">
+    <div class="set-row row g-2 align-items-center mb-2">
+        <div class="col-1 text-muted small set-number fw-semibold"></div>
+        <div class="col-3">
+            <input type="number" name="Exercises[__ei__].Sets[__si__].Reps"
+                   class="form-control form-control-sm" min="1" max="200" value="10" />
+        </div>
+        <div class="col-3">
+            <input type="number" name="Exercises[__ei__].Sets[__si__].WeightKg"
+                   class="form-control form-control-sm" min="0" step="0.5" value="0" />
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-sm btn-link text-danger removeSet p-0">Remove</button>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const exerciseList     = document.getElementById('exerciseList');
+        const emptyState       = document.getElementById('emptyState');
+        const exerciseTemplate = document.getElementById('exerciseTemplate');
+        const setTemplate      = document.getElementById('setTemplate');
+
+        // Start from the number of server-rendered exercises so new ones
+        // don't collide with existing indices
+        let exerciseIndex = @Model.Exercises.Count;
+
+        function updateEmptyState() {
+            emptyState.classList.toggle('d-none', exerciseList.children.length > 0);
+        }
+
+        function reindexAll() {
+            exerciseList.querySelectorAll('.exercise-card').forEach((card, ei) => {
+                card.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/Exercises\[\d+\]/, `Exercises[${ei}]`);
+                });
+                card.querySelectorAll('.set-row').forEach((row, si) => {
+                    row.querySelectorAll('[name]').forEach(el => {
+                        el.name = el.name.replace(/Sets\[\d+\]/, `Sets[${si}]`);
+                    });
+                    row.querySelector('.set-number').textContent = si + 1;
+                });
+            });
+            exerciseIndex = exerciseList.querySelectorAll('.exercise-card').length;
+        }
+
+        function addSet(card) {
+            const ei      = [...exerciseList.querySelectorAll('.exercise-card')].indexOf(card);
+            const setList = card.querySelector('.set-list');
+            const si      = setList.querySelectorAll('.set-row').length;
+            const html    = setTemplate.innerHTML
+                .replaceAll('__ei__', ei)
+                .replaceAll('__si__', si);
+            setList.insertAdjacentHTML('beforeend', html);
+            setList.lastElementChild.querySelector('.set-number').textContent = si + 1;
+        }
+
+        document.getElementById('addExercise').addEventListener('click', () => {
+            const html = exerciseTemplate.innerHTML.replaceAll('__ei__', exerciseIndex);
+            exerciseList.insertAdjacentHTML('beforeend', html);
+            addSet(exerciseList.lastElementChild);
+            exerciseIndex++;
+            updateEmptyState();
+        });
+
+        exerciseList.addEventListener('click', e => {
+            if (e.target.classList.contains('removeExercise')) {
+                e.target.closest('.exercise-card').remove();
+                reindexAll();
+                updateEmptyState();
+            }
+            if (e.target.classList.contains('addSet')) {
+                addSet(e.target.closest('.exercise-card'));
+            }
+            if (e.target.classList.contains('removeSet')) {
+                e.target.closest('.set-row').remove();
+                reindexAll();
+            }
+        });
+    </script>
+}
