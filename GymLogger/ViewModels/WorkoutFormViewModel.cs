@@ -17,11 +17,14 @@ public class WorkoutFormViewModel
     [Required]
     [DataType(DataType.Date)]
     public DateTime Date { get; set; }
-    
+
     [Required]
     [Range(1, 1440, ErrorMessage = "Duration must be between 1 and 1440 minutes.")]
     [Display(Name = "Duration (minutes)")]
     public int DurationMinutes { get; set; }
     public List<WorkoutExerciseInputModel> Exercises { get; set; } = [];
     public SelectList? ExerciseOptions { get; set; }
+
+    // Set of exercise IDs that belong to the Cardio muscle group — used by JS to toggle inputs
+    public HashSet<int> CardioExerciseIds { get; set; } = [];
 }

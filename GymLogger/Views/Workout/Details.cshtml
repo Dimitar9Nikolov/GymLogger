@@ -23,7 +23,6 @@
     </div>
 }
 
-<!-- Workout header -->
 <div class="card mb-4">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
@@ -49,7 +48,6 @@
     </div>
 </div>
 
-<!-- Exercise table -->
 @if (!Model.Exercises.Any())
 {
     <div class="text-center text-muted py-4">
@@ -58,59 +56,70 @@
 }
 else
 {
-    <div class="card">
-        <div class="card-header fw-semibold">Exercises</div>
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width:40px">#</th>
-                        <th>Exercise</th>
-                        <th>Set</th>
-                        <th>Reps</th>
-                        <th>Weight</th>
-                        <th>Notes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var exercise in Model.Exercises)
-                    {
+    @foreach (var exercise in Model.Exercises)
+    {
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">@exercise.Order. @exercise.ExerciseName</span>
+                @if (exercise.IsCardio)
+                {
+                    <span class="badge bg-success">Cardio</span>
+                }
+                else
+                {
+                    <span class="badge bg-primary">Strength</span>
+                }
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:60px">Set</th>
+                            @if (exercise.IsCardio)
+                            {
+                                <th>Duration</th>
+                                <th>Distance</th>
+                            }
+                            else
+                            {
+                                <th>Reps</th>
+                                <th>Weight</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
                         @if (!exercise.Sets.Any())
                         {
                             <tr>
-                                <td class="text-muted">@exercise.Order</td>
-                                <td class="fw-medium">@exercise.ExerciseName</td>
                                 <td colspan="3" class="text-muted small">No sets logged</td>
-                                <td class="text-muted small">@exercise.Notes</td>
                             </tr>
                         }
                         else
                         {
-                            @for (int s = 0; s < exercise.Sets.Count; s++)
+                            @foreach (var set in exercise.Sets)
                             {
-                                var set = exercise.Sets[s];
                                 <tr>
-                                    @if (s == 0)
-                                    {
-                                        <!-- Only show the exercise number and name on the first set row -->
-                                        <td class="text-muted align-top" rowspan="@exercise.Sets.Count">@exercise.Order</td>
-                                        <td class="fw-medium align-top" rowspan="@exercise.Sets.Count">
-                                            @exercise.ExerciseName
-                                        </td>
-                                    }
                                     <td class="text-muted">@set.SetNumber</td>
-                                    <td>@set.Reps</td>
-                                    <td>@set.WeightKg kg</td>
-                                    @if (s == 0)
+                                    @if (exercise.IsCardio)
                                     {
-                                        <td class="text-muted small align-top" rowspan="@exercise.Sets.Count">@exercise.Notes</td>
+                                        <td>@(set.DurationMinutes.HasValue ? $"{set.DurationMinutes} min" : "—")</td>
+                                        <td>@(set.DistanceKm.HasValue ? $"{set.DistanceKm} km" : "—")</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@(set.Reps.HasValue ? set.Reps.ToString() : "—")</td>
+                                        <td>@(set.WeightKg.HasValue ? $"{set.WeightKg} kg" : "—")</td>
                                     }
                                 </tr>
                             }
                         }
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
+            @if (!string.IsNullOrEmpty(exercise.Notes))
+            {
+                <div class="card-footer text-muted small">📝 @exercise.Notes</div>
+            }
         </div>
-    </div>
+    }
 }

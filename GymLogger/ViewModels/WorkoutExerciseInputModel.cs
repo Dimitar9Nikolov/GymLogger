@@ -10,6 +10,8 @@ public class WorkoutExerciseInputModel
     [MaxLength(500)]
     public string? Notes { get; set; }
 
-    // Each item is one set with its own reps and weight
+    // Not bound from form — set by controller for view rendering in Edit
+    public bool IsCardio { get; set; }
+
     public List<WorkoutSetInputModel> Sets { get; set; } = [];
 }

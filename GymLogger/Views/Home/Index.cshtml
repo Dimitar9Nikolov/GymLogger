@@ -1,8 +1,108 @@
-﻿@{ 
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "GymLogger — Track Your Gains";
+    Layout = "_Layout";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero -->
+<div class="py-5 text-center">
+    <h1 class="display-4 fw-bold mb-3">Track Every Rep.<br />Own Every Gain.</h1>
+    <p class="lead text-muted mb-4 mx-auto" style="max-width:560px;">
+        GymLogger helps you log workouts, track personal records, and stay consistent —
+        whether you're lifting heavy or going for a run.
+    </p>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary btn-lg px-4 me-2">Go to Dashboard</a>
+        <a asp-controller="Workout" asp-action="Create" class="btn btn-outline-secondary btn-lg px-4">Log a Workout</a>
+    }
+    else
+    {
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-lg px-4 me-2">Get Started Free</a>
+        <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-secondary btn-lg px-4">Sign In</a>
+    }
 </div>
+
+<hr class="my-4" />
+
+<!-- Feature cards -->
+<div class="row g-4 py-3">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="fs-1 mb-3">🏋️</div>
+                <h5 class="card-title fw-bold">Log Workouts</h5>
+                <p class="card-text text-muted">
+                    Record every set, rep, and weight for strength exercises — or log duration
+                    and distance for cardio. Everything in one place.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="fs-1 mb-3">📈</div>
+                <h5 class="card-title fw-bold">Track Progress</h5>
+                <p class="card-text text-muted">
+                    See your personal records and workout history at a glance.
+                    Watch your numbers grow over time.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="fs-1 mb-3">🔍</div>
+                <h5 class="card-title fw-bold">Exercise Library</h5>
+                <p class="card-text text-muted">
+                    Browse approved exercises with images and instructions,
+                    or submit your own for admin review.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How it works -->
+<div class="py-5">
+    <h2 class="text-center fw-bold mb-4">How It Works</h2>
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-3 text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:56px;height:56px;font-size:1.4rem;font-weight:700;">1</div>
+            <h6 class="fw-bold">Create an account</h6>
+            <p class="text-muted small">Sign up in seconds — no credit card needed.</p>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:56px;height:56px;font-size:1.4rem;font-weight:700;">2</div>
+            <h6 class="fw-bold">Pick your exercises</h6>
+            <p class="text-muted small">Choose from the exercise library covering all muscle groups.</p>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:56px;height:56px;font-size:1.4rem;font-weight:700;">3</div>
+            <h6 class="fw-bold">Log and save</h6>
+            <p class="text-muted small">Add sets with reps & weight, or duration & distance for cardio.</p>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:56px;height:56px;font-size:1.4rem;font-weight:700;">4</div>
+            <h6 class="fw-bold">Watch yourself grow</h6>
+            <p class="text-muted small">Your dashboard shows recent workouts and personal bests.</p>
+        </div>
+    </div>
+</div>
+
+@if (User.Identity?.IsAuthenticated != true)
+{
+    <!-- CTA banner -->
+    <div class="bg-primary text-white rounded-3 p-5 text-center mb-4">
+        <h3 class="fw-bold mb-2">Ready to start tracking?</h3>
+        <p class="mb-4 opacity-75">Join GymLogger and never lose track of your progress again.</p>
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-light btn-lg px-5 fw-semibold">
+            Sign Up — It's Free
+        </a>
+    </div>
+}

@@ -1,6 +1,8 @@
 @model WorkoutFormViewModel
+@using System.Text.Json
 @{
-    ViewData["Title"] = "Edit Workout";
+        ViewData["Title"] = "Edit Workout";
+    var cardioIds = Json.Serialize(Model.CardioExerciseIds);
 }
 
 <div class="mb-3">
@@ -14,7 +16,6 @@
     <input type="hidden" asp-for="Id" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-    <!-- Workout header fields -->
     <div class="card mb-4">
         <div class="card-header fw-semibold">Workout Details</div>
         <div class="card-body">
@@ -51,9 +52,10 @@
         @for (int ei = 0; ei < Model.Exercises.Count; ei++)
         {
             var exercise = Model.Exercises[ei];
-            <div class="card mb-3 exercise-card">
+            var isCardio = exercise.IsCardio;
+            <div class="card mb-3 exercise-card" data-cardio="@isCardio.ToString().ToLower()">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <select name="Exercises[@ei].ExerciseId" class="form-select form-select-sm w-auto"
+                    <select name="Exercises[@ei].ExerciseId" class="exercise-select form-select form-select-sm w-auto"
                             style="min-width:220px;">
                         <option value="">Select exercise...</option>
                         @if (Model.ExerciseOptions != null)
@@ -78,10 +80,16 @@
                     <button type="button" class="btn btn-sm btn-outline-danger removeExercise">Remove exercise</button>
                 </div>
                 <div class="card-body p-0">
-                    <div class="row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom">
+                    <div class="set-headers-strength row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom @(isCardio ? "d-none" : "")">
                         <div class="col-1">Set</div>
                         <div class="col-3">Reps</div>
                         <div class="col-3">Weight (kg)</div>
+                        <div class="col-5"></div>
+                    </div>
+                    <div class="set-headers-cardio row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom @(!isCardio ? "d-none" : "")">
+                        <div class="col-1">Set</div>
+                        <div class="col-3">Duration (min)</div>
+                        <div class="col-3">Distance (km)</div>
                         <div class="col-5"></div>
                     </div>
                     <div class="set-list px-3 py-2">
@@ -90,16 +98,32 @@
                             var set = exercise.Sets[si];
                             <div class="set-row row g-2 align-items-center mb-2">
                                 <div class="col-1 text-muted small set-number fw-semibold">@(si + 1)</div>
-                                <div class="col-3">
-                                    <input type="number" name="Exercises[@ei].Sets[@si].Reps"
-                                           value="@set.Reps"
-                                           class="form-control form-control-sm" min="1" max="200" />
-                                </div>
-                                <div class="col-3">
-                                    <input type="number" name="Exercises[@ei].Sets[@si].WeightKg"
-                                           value="@set.WeightKg"
-                                           class="form-control form-control-sm" min="0" step="0.5" />
-                                </div>
+                                @if (isCardio)
+                                {
+                                    <div class="col-3">
+                                        <input type="number" name="Exercises[@ei].Sets[@si].DurationMinutes"
+                                               value="@set.DurationMinutes"
+                                               class="form-control form-control-sm" min="1" max="1440" />
+                                    </div>
+                                    <div class="col-3">
+                                        <input type="number" name="Exercises[@ei].Sets[@si].DistanceKm"
+                                               value="@set.DistanceKm"
+                                               class="form-control form-control-sm" min="0" step="0.1" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-3">
+                                        <input type="number" name="Exercises[@ei].Sets[@si].Reps"
+                                               value="@set.Reps"
+                                               class="form-control form-control-sm" min="1" max="200" />
+                                    </div>
+                                    <div class="col-3">
+                                        <input type="number" name="Exercises[@ei].Sets[@si].WeightKg"
+                                               value="@set.WeightKg"
+                                               class="form-control form-control-sm" min="0" step="0.5" />
+                                    </div>
+                                }
                                 <div class="col-2">
                                     <button type="button" class="btn btn-sm btn-link text-danger removeSet p-0">Remove</button>
                                 </div>
@@ -134,11 +158,10 @@
     </div>
 </form>
 
-<!-- Templates for JS-added rows (same as Create) -->
 <template id="exerciseTemplate">
-    <div class="card mb-3 exercise-card">
+    <div class="card mb-3 exercise-card" data-cardio="false">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <select name="Exercises[__ei__].ExerciseId" class="form-select form-select-sm w-auto"
+            <select name="Exercises[__ei__].ExerciseId" class="exercise-select form-select form-select-sm w-auto"
                     style="min-width:220px;">
                 <option value="">Select exercise...</option>
                 @if (Model.ExerciseOptions != null)
@@ -152,10 +175,16 @@
             <button type="button" class="btn btn-sm btn-outline-danger removeExercise">Remove exercise</button>
         </div>
         <div class="card-body p-0">
-            <div class="row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom">
+            <div class="set-headers-strength row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom">
                 <div class="col-1">Set</div>
                 <div class="col-3">Reps</div>
                 <div class="col-3">Weight (kg)</div>
+                <div class="col-5"></div>
+            </div>
+            <div class="set-headers-cardio row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom d-none">
+                <div class="col-1">Set</div>
+                <div class="col-3">Duration (min)</div>
+                <div class="col-3">Distance (km)</div>
                 <div class="col-5"></div>
             </div>
             <div class="set-list px-3 py-2"></div>
@@ -171,7 +200,7 @@
     </div>
 </template>
 
-<template id="setTemplate">
+<template id="strengthSetTemplate">
     <div class="set-row row g-2 align-items-center mb-2">
         <div class="col-1 text-muted small set-number fw-semibold"></div>
         <div class="col-3">
@@ -188,17 +217,45 @@
     </div>
 </template>
 
+<template id="cardioSetTemplate">
+    <div class="set-row row g-2 align-items-center mb-2">
+        <div class="col-1 text-muted small set-number fw-semibold"></div>
+        <div class="col-3">
+            <input type="number" name="Exercises[__ei__].Sets[__si__].DurationMinutes"
+                   class="form-control form-control-sm" min="1" max="1440" value="30" />
+        </div>
+        <div class="col-3">
+            <input type="number" name="Exercises[__ei__].Sets[__si__].DistanceKm"
+                   class="form-control form-control-sm" min="0" step="0.1" value="0" />
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-sm btn-link text-danger removeSet p-0">Remove</button>
+        </div>
+    </div>
+</template>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        const exerciseList     = document.getElementById('exerciseList');
-        const emptyState       = document.getElementById('emptyState');
-        const exerciseTemplate = document.getElementById('exerciseTemplate');
-        const setTemplate      = document.getElementById('setTemplate');
+        const cardioIds           = new Set(@Html.Raw(cardioIds));
+        const exerciseList        = document.getElementById('exerciseList');
+        const emptyState          = document.getElementById('emptyState');
+        const exerciseTemplate    = document.getElementById('exerciseTemplate');
+        const strengthSetTemplate = document.getElementById('strengthSetTemplate');
+        const cardioSetTemplate   = document.getElementById('cardioSetTemplate');
+        let exerciseIndex         = @Model.Exercises.Count;
 
-        // Start from the number of server-rendered exercises so new ones
-        // don't collide with existing indices
-        let exerciseIndex = @Model.Exercises.Count;
+        function isCardioCard(card) {
+            return card.dataset.cardio === 'true';
+        }
+
+        function applyCardioMode(card, isCardio) {
+            card.dataset.cardio = isCardio;
+            card.querySelector('.set-headers-strength').classList.toggle('d-none', isCardio);
+            card.querySelector('.set-headers-cardio').classList.toggle('d-none', !isCardio);
+            card.querySelector('.set-list').innerHTML = '';
+            addSet(card);
+        }
 
         function updateEmptyState() {
             emptyState.classList.toggle('d-none', exerciseList.children.length > 0);
@@ -223,19 +280,29 @@
             const ei      = [...exerciseList.querySelectorAll('.exercise-card')].indexOf(card);
             const setList = card.querySelector('.set-list');
             const si      = setList.querySelectorAll('.set-row').length;
-            const html    = setTemplate.innerHTML
-                .replaceAll('__ei__', ei)
-                .replaceAll('__si__', si);
+            const tmpl    = isCardioCard(card) ? cardioSetTemplate : strengthSetTemplate;
+            const html    = tmpl.innerHTML.replaceAll('__ei__', ei).replaceAll('__si__', si);
             setList.insertAdjacentHTML('beforeend', html);
             setList.lastElementChild.querySelector('.set-number').textContent = si + 1;
+        }
+
+        function wireSelectHandler(card) {
+            card.querySelector('.exercise-select').addEventListener('change', function () {
+                const selectedId = parseInt(this.value);
+                const isCardio = cardioIds.has(selectedId);
+                applyCardioMode(card, isCardio);
+                reindexAll();
+            });
         }
 
         document.getElementById('addExercise').addEventListener('click', () => {
             const html = exerciseTemplate.innerHTML.replaceAll('__ei__', exerciseIndex);
             exerciseList.insertAdjacentHTML('beforeend', html);
-            addSet(exerciseList.lastElementChild);
+            const card = exerciseList.lastElementChild;
+            addSet(card);
             exerciseIndex++;
             updateEmptyState();
+            wireSelectHandler(card);
         });
 
         exerciseList.addEventListener('click', e => {
@@ -252,5 +319,8 @@
                 reindexAll();
             }
         });
+
+        // Wire change handlers for server-rendered cards
+        document.querySelectorAll('.exercise-card').forEach(wireSelectHandler);
     </script>
 }

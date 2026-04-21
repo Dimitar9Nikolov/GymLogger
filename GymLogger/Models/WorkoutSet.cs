@@ -14,8 +14,16 @@ public class WorkoutSet
     public WorkoutExercise WorkoutExercise { get; set; } = null!;
 
     public int SetNumber { get; set; }
-    public int Reps { get; set; }
+
+    // Strength fields (null for cardio exercises)
+    public int? Reps { get; set; }
 
     [Precision(6, 2)]
-    public decimal WeightKg { get; set; }
+    public decimal? WeightKg { get; set; }
+
+    // Cardio fields (null for strength exercises)
+    public int? DurationMinutes { get; set; }
+
+    [Precision(6, 2)]
+    public decimal? DistanceKm { get; set; }
 }

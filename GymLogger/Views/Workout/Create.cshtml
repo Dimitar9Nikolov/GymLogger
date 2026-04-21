@@ -1,6 +1,8 @@
 @model WorkoutFormViewModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "Log Workout";
+    var cardioIds = Json.Serialize(Model.CardioExerciseIds);
 }
 
 <div class="mb-3">
@@ -13,7 +15,6 @@
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-    <!-- Workout header fields -->
     <div class="card mb-4">
         <div class="card-header fw-semibold">Workout Details</div>
         <div class="card-body">
@@ -45,7 +46,6 @@
         </div>
     </div>
 
-    <!-- Exercise list -->
     <div class="mb-4" id="exerciseList"></div>
 
     <div class="d-flex gap-2 mb-4">
@@ -62,11 +62,11 @@
     </div>
 </form>
 
-<!-- Exercise row template -->
+<!-- Strength exercise template -->
 <template id="exerciseTemplate">
     <div class="card mb-3 exercise-card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <select name="Exercises[__ei__].ExerciseId" class="form-select form-select-sm w-auto"
+            <select name="Exercises[__ei__].ExerciseId" class="exercise-select form-select form-select-sm w-auto"
                     style="min-width:220px;">
                 <option value="">Select exercise...</option>
                 @if (Model.ExerciseOptions != null)
@@ -80,18 +80,21 @@
             <button type="button" class="btn btn-sm btn-outline-danger removeExercise">Remove exercise</button>
         </div>
         <div class="card-body p-0">
-
-            <!-- Set column headers -->
-            <div class="row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom">
+            <!-- Strength headers -->
+            <div class="set-headers-strength row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom">
                 <div class="col-1">Set</div>
                 <div class="col-3">Reps</div>
                 <div class="col-3">Weight (kg)</div>
                 <div class="col-5"></div>
             </div>
-
-            <!-- Set rows -->
+            <!-- Cardio headers -->
+            <div class="set-headers-cardio row g-0 px-3 pt-3 pb-1 text-muted small fw-semibold border-bottom d-none">
+                <div class="col-1">Set</div>
+                <div class="col-3">Duration (min)</div>
+                <div class="col-3">Distance (km)</div>
+                <div class="col-5"></div>
+            </div>
             <div class="set-list px-3 py-2"></div>
-
             <div class="px-3 pb-3">
                 <button type="button" class="btn btn-sm btn-outline-secondary addSet">+ Add Set</button>
             </div>
@@ -104,8 +107,8 @@
     </div>
 </template>
 
-<!-- Set row template -->
-<template id="setTemplate">
+<!-- Strength set row template -->
+<template id="strengthSetTemplate">
     <div class="set-row row g-2 align-items-center mb-2">
         <div class="col-1 text-muted small set-number fw-semibold"></div>
         <div class="col-3">
@@ -122,28 +125,57 @@
     </div>
 </template>
 
+<!-- Cardio set row template -->
+<template id="cardioSetTemplate">
+    <div class="set-row row g-2 align-items-center mb-2">
+        <div class="col-1 text-muted small set-number fw-semibold"></div>
+        <div class="col-3">
+            <input type="number" name="Exercises[__ei__].Sets[__si__].DurationMinutes"
+                   class="form-control form-control-sm" min="1" max="1440" value="30" />
+        </div>
+        <div class="col-3">
+            <input type="number" name="Exercises[__ei__].Sets[__si__].DistanceKm"
+                   class="form-control form-control-sm" min="0" step="0.1" value="0" />
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-sm btn-link text-danger removeSet p-0">Remove</button>
+        </div>
+    </div>
+</template>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        const exerciseList     = document.getElementById('exerciseList');
-        const emptyState       = document.getElementById('emptyState');
-        const exerciseTemplate = document.getElementById('exerciseTemplate');
-        const setTemplate      = document.getElementById('setTemplate');
-        let exerciseIndex      = 0;
+        const cardioIds            = new Set(@Html.Raw(cardioIds));
+        const exerciseList         = document.getElementById('exerciseList');
+        const emptyState           = document.getElementById('emptyState');
+        const exerciseTemplate     = document.getElementById('exerciseTemplate');
+        const strengthSetTemplate  = document.getElementById('strengthSetTemplate');
+        const cardioSetTemplate    = document.getElementById('cardioSetTemplate');
+        let exerciseIndex          = 0;
+
+        function isCardioCard(card) {
+            return card.dataset.cardio === 'true';
+        }
+
+        function applyCardioMode(card, isCardio) {
+            card.dataset.cardio = isCardio;
+            card.querySelector('.set-headers-strength').classList.toggle('d-none', isCardio);
+            card.querySelector('.set-headers-cardio').classList.toggle('d-none', !isCardio);
+            // Clear existing sets and add a fresh one in the right mode
+            card.querySelector('.set-list').innerHTML = '';
+            addSet(card);
+        }
 
         function updateEmptyState() {
             emptyState.classList.toggle('d-none', exerciseList.children.length > 0);
         }
 
         function reindexAll() {
-            // After any add/remove, renumber all exercises and their sets
-            // so the binder always sees Exercises[0], Exercises[1]... with no gaps
             exerciseList.querySelectorAll('.exercise-card').forEach((card, ei) => {
                 card.querySelectorAll('[name]').forEach(el => {
-                    // Replace exercise index: Exercises[old] -> Exercises[ei]
                     el.name = el.name.replace(/Exercises\[\d+\]/, `Exercises[${ei}]`);
                 });
-                // Renumber the set rows within this exercise
                 card.querySelectorAll('.set-row').forEach((row, si) => {
                     row.querySelectorAll('[name]').forEach(el => {
                         el.name = el.name.replace(/Sets\[\d+\]/, `Sets[${si}]`);
@@ -158,37 +190,40 @@
             const ei       = [...exerciseList.querySelectorAll('.exercise-card')].indexOf(card);
             const setList  = card.querySelector('.set-list');
             const si       = setList.querySelectorAll('.set-row').length;
-            const html     = setTemplate.innerHTML
-                .replaceAll('__ei__', ei)
-                .replaceAll('__si__', si);
+            const tmpl     = isCardioCard(card) ? cardioSetTemplate : strengthSetTemplate;
+            const html     = tmpl.innerHTML.replaceAll('__ei__', ei).replaceAll('__si__', si);
             setList.insertAdjacentHTML('beforeend', html);
-            // Update set number label
             setList.lastElementChild.querySelector('.set-number').textContent = si + 1;
         }
 
         document.getElementById('addExercise').addEventListener('click', () => {
-            const html  = exerciseTemplate.innerHTML.replaceAll('__ei__', exerciseIndex);
+            const html = exerciseTemplate.innerHTML.replaceAll('__ei__', exerciseIndex);
             exerciseList.insertAdjacentHTML('beforeend', html);
-            // Add a first set automatically so the card isn't empty
-            addSet(exerciseList.lastElementChild);
+            const card = exerciseList.lastElementChild;
+            card.dataset.cardio = 'false';
+            addSet(card);
             exerciseIndex++;
             updateEmptyState();
+
+            // Wire up the select change handler for this new card
+            card.querySelector('.exercise-select').addEventListener('change', function () {
+                const selectedId = parseInt(this.value);
+                const isCardio = cardioIds.has(selectedId);
+                applyCardioMode(card, isCardio);
+                reindexAll();
+            });
         });
 
         exerciseList.addEventListener('click', e => {
-            // Remove an entire exercise card
             if (e.target.classList.contains('removeExercise')) {
                 e.target.closest('.exercise-card').remove();
                 reindexAll();
                 updateEmptyState();
             }
-            // Add a set row inside the exercise card
             if (e.target.classList.contains('addSet')) {
                 addSet(e.target.closest('.exercise-card'));
             }
-            // Remove a single set row
             if (e.target.classList.contains('removeSet')) {
-                const card = e.target.closest('.exercise-card');
                 e.target.closest('.set-row').remove();
                 reindexAll();
             }

@@ -1,5 +1,6 @@
 using GymLogger.Data;
 using GymLogger.Models;
+using GymLogger.Models.Enums;
 using GymLogger.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -87,13 +88,16 @@ public class WorkoutController : Controller
                         Order = we.Order,
                         ExerciseName = we.Exercise.Name,
                         Notes = we.Notes,
+                        IsCardio = we.Exercise.MuscleGroup == MuscleGroup.Cardio,
                         Sets = we.Sets
                             .OrderBy(s => s.SetNumber)
                             .Select(s => new WorkoutSetViewModel
                             {
                                 SetNumber = s.SetNumber,
                                 Reps = s.Reps,
-                                WeightKg = s.WeightKg
+                                WeightKg = s.WeightKg,
+                                DurationMinutes = s.DurationMinutes,
+                                DistanceKm = s.DistanceKm
                             })
                             .ToList()
                     })
@@ -121,8 +125,11 @@ public class WorkoutController : Controller
             .ToListAsync();
 
         viewModel.ExerciseOptions = new SelectList(exercises, "Id", "Name");
+        viewModel.CardioExerciseIds = exercises
+            .Where(e => e.MuscleGroup == MuscleGroup.Cardio)
+            .Select(e => e.Id)
+            .ToHashSet();
 
-     
         return View(viewModel);
     }
 
@@ -137,6 +144,10 @@ public class WorkoutController : Controller
                 .OrderBy(e => e.Name)
                 .ToListAsync();
             model.ExerciseOptions = new SelectList(exercises, "Id", "Name");
+            model.CardioExerciseIds = exercises
+                .Where(e => e.MuscleGroup == MuscleGroup.Cardio)
+                .Select(e => e.Id)
+                .ToHashSet();
             return View(model);
         }
 
@@ -165,7 +176,9 @@ public class WorkoutController : Controller
                 {
                     SetNumber = s + 1,
                     Reps = exerciseInput.Sets[s].Reps,
-                    WeightKg = exerciseInput.Sets[s].WeightKg
+                    WeightKg = exerciseInput.Sets[s].WeightKg,
+                    DurationMinutes = exerciseInput.Sets[s].DurationMinutes,
+                    DistanceKm = exerciseInput.Sets[s].DistanceKm
                 });
             }
 
@@ -174,7 +187,7 @@ public class WorkoutController : Controller
 
         _context.Workouts.Add(workout);
         await _context.SaveChangesAsync();
-        
+
         TempData["Success"] = "Workout created successfully.";
         return RedirectToAction("Details", new { id = workout.Id });
     }
@@ -193,6 +206,16 @@ public class WorkoutController : Controller
             if (workout == null)
                 return NotFound();
 
+        var exercises = await _context.Exercises
+            .Where(e => e.IsApproved)
+            .OrderBy(e => e.Name)
+            .ToListAsync();
+
+        var cardioIds = exercises
+            .Where(e => e.MuscleGroup == MuscleGroup.Cardio)
+            .Select(e => e.Id)
+            .ToHashSet();
+
         var viewModel = new WorkoutFormViewModel
         {
             Id = workout.Id,
@@ -200,28 +223,27 @@ public class WorkoutController : Controller
             Notes = workout.Notes,
             Date = workout.Date,
             DurationMinutes = workout.DurationMinutes,
+            CardioExerciseIds = cardioIds,
             Exercises = workout.WorkoutExercises
                 .OrderBy(we => we.Order)
                 .Select(we => new WorkoutExerciseInputModel
                 {
                     ExerciseId = we.ExerciseId,
                     Notes = we.Notes,
+                    IsCardio = cardioIds.Contains(we.ExerciseId),
                     Sets = we.Sets
                         .OrderBy(s => s.SetNumber)
                         .Select(s => new WorkoutSetInputModel
                         {
                             Reps = s.Reps,
-                            WeightKg = s.WeightKg
+                            WeightKg = s.WeightKg,
+                            DurationMinutes = s.DurationMinutes,
+                            DistanceKm = s.DistanceKm
                         })
                         .ToList()
                 })
                 .ToList()
         };
-
-        var exercises = await _context.Exercises
-            .Where(e => e.IsApproved)
-            .OrderBy(e => e.Name)
-            .ToListAsync();
 
         viewModel.ExerciseOptions = new SelectList(exercises, "Id", "Name");
         return View(viewModel);
@@ -238,9 +260,13 @@ public class WorkoutController : Controller
                 .OrderBy(e => e.Name)
                 .ToListAsync();
             model.ExerciseOptions = new SelectList(exercises, "Id", "Name");
+            model.CardioExerciseIds = exercises
+                .Where(e => e.MuscleGroup == MuscleGroup.Cardio)
+                .Select(e => e.Id)
+                .ToHashSet();
             return View(model);
         }
-        
+
         var workout = await _context.Workouts
             .Where(w => w.Id == id && w.UserId == _userManager.GetUserId(User))
             .Include(w => w.WorkoutExercises)
@@ -273,7 +299,9 @@ public class WorkoutController : Controller
                 {
                     SetNumber = s + 1,
                     Reps = exerciseInput.Sets[s].Reps,
-                    WeightKg = exerciseInput.Sets[s].WeightKg
+                    WeightKg = exerciseInput.Sets[s].WeightKg,
+                    DurationMinutes = exerciseInput.Sets[s].DurationMinutes,
+                    DistanceKm = exerciseInput.Sets[s].DistanceKm
                 });
             }
 
