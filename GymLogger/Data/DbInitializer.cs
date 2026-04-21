@@ -47,7 +47,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Chest,
                     Difficulty = Difficulty.Intermediate,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2018/11/bankdruecken-flachbank-langhantel-800x448.png"
                 },
                 new()
                 {
@@ -57,7 +58,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Back,
                     Difficulty = Difficulty.Intermediate,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/02/klimmzuege-800x448.png"
                 },
                 new()
                 {
@@ -67,7 +69,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Legs,
                     Difficulty = Difficulty.Advanced,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/03/kniebeugen-langhantel-800x448.png"
                 },
                 new()
                 {
@@ -77,7 +80,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Back,
                     Difficulty = Difficulty.Advanced,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/02/deadlift-kreuzheben-800x448.png"
                 },
                 new()
                 {
@@ -87,7 +91,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Shoulders,
                     Difficulty = Difficulty.Intermediate,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/03/schulterdruecken-langhantel-800x448.png"
                 },
                 new()
                 {
@@ -97,7 +102,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Arms,
                     Difficulty = Difficulty.Beginner,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2018/12/bizepscurls-800x448.png"
                 },
                 new()
                 {
@@ -107,7 +113,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Core,
                     Difficulty = Difficulty.Beginner,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://gymvisual.com/img/p/9/0/3/8/9038.gif"
                 },
                 new()
                 {
@@ -117,7 +124,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Legs,
                     Difficulty = Difficulty.Intermediate,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/03/kreuzheben-gestreckte-beine.png"
                 },
                 new()
                 {
@@ -127,7 +135,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Arms,
                     Difficulty = Difficulty.Beginner,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/03/trizepsdruecken-kabelzug.png"
                 },
                 new()
                 {
@@ -137,7 +146,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Back,
                     Difficulty = Difficulty.Beginner,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/02/latzug-800x448.png"
                 },
                 new()
                 {
@@ -147,7 +157,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Cardio,
                     Difficulty = Difficulty.Beginner,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://gymvisual.com/img/p/9/3/9/4/9394.gif"
                 },
                 new()
                 {
@@ -157,7 +168,8 @@ public static class DbInitializer
                     MuscleGroup = MuscleGroup.Legs,
                     Difficulty = Difficulty.Beginner,
                     IsApproved = true,
-                    CreatedById = adminUser.Id
+                    CreatedById = adminUser.Id,
+                    ImageUrl = "https://training.fit/wp-content/uploads/2020/03/ausfallschritt-kurzhanteln-1-800x448.png"
                 },
             };
 
