@@ -25,51 +25,70 @@ public class PersonalRecordController : Controller
         var userId = _userManager.GetUserId(User)!;
 
         // Derive PRs from WorkoutSets: best weight per strength exercise,
-        // best distance per cardio exercise.
+        // best speed per cardio exercise.
         var allSets = await _context.WorkoutSets
             .Where(s => s.WorkoutExercise.Workout.UserId == userId)
             .Select(s => new
             {
-                ExerciseId    = s.WorkoutExercise.ExerciseId,
-                ExerciseName  = s.WorkoutExercise.Exercise.Name,
-                MuscleGroup   = s.WorkoutExercise.Exercise.MuscleGroup,
-                IsCardio      = s.WorkoutExercise.Exercise.MuscleGroup == MuscleGroup.Cardio,
-                WeightKg      = s.WeightKg,
-                Reps          = s.Reps,
-                DistanceKm    = s.DistanceKm,
+                ExerciseId      = s.WorkoutExercise.ExerciseId,
+                ExerciseName    = s.WorkoutExercise.Exercise.Name,
+                MuscleGroup     = s.WorkoutExercise.Exercise.MuscleGroup,
+                IsCardio        = s.WorkoutExercise.Exercise.MuscleGroup == MuscleGroup.Cardio,
+                WeightKg        = s.WeightKg,
+                Reps            = s.Reps,
+                DistanceKm      = s.DistanceKm,
                 DurationMinutes = s.DurationMinutes,
-                Date          = s.WorkoutExercise.Workout.Date
+                Date            = s.WorkoutExercise.Workout.Date
             })
             .ToListAsync();
 
         var strengthPRs = allSets
-            .Where(s => !s.IsCardio && s.WeightKg.HasValue)
+            .Where(s => !s.IsCardio)
             .GroupBy(s => s.ExerciseId)
-            .Select(g => g.OrderByDescending(s => s.WeightKg).ThenByDescending(s => s.Date).First())
-            .Select(s => new PersonalRecordIndexViewModel
+            .Select(g =>
             {
-                ExerciseName = s.ExerciseName,
-                MuscleGroup  = s.MuscleGroup.ToString(),
-                IsCardio     = false,
-                WeightKg     = s.WeightKg,
-                Reps         = s.Reps,
-                Date         = s.Date
+                var best = g.OrderByDescending(s => s.WeightKg ?? 0m).ThenByDescending(s => s.Date).First();
+                return new PersonalRecordIndexViewModel
+                {
+                    ExerciseName = best.ExerciseName,
+                    MuscleGroup  = best.MuscleGroup.ToString(),
+                    IsCardio     = false,
+                    WeightKg     = best.WeightKg ?? 0m,
+                    Reps         = best.Reps,
+                    Date         = best.Date
+                };
             })
             .OrderBy(s => s.ExerciseName)
             .ToList();
 
         var cardioPRs = allSets
-            .Where(s => s.IsCardio && s.DistanceKm.HasValue)
+            .Where(s => s.IsCardio)
             .GroupBy(s => s.ExerciseId)
-            .Select(g => g.OrderByDescending(s => s.DistanceKm).ThenByDescending(s => s.Date).First())
-            .Select(s => new PersonalRecordIndexViewModel
+            .Select(g =>
             {
-                ExerciseName    = s.ExerciseName,
-                MuscleGroup     = s.MuscleGroup.ToString(),
-                IsCardio        = true,
-                DistanceKm      = s.DistanceKm,
-                DurationMinutes = s.DurationMinutes,
-                Date            = s.Date
+                // Prefer sets with both distance and duration (so we can calc speed)
+                var withSpeed = g.Where(s => s.DistanceKm.HasValue && s.DurationMinutes is > 0).ToList();
+                var best = withSpeed.Any()
+                    ? withSpeed.OrderByDescending(s => s.DistanceKm!.Value / (s.DurationMinutes!.Value / 60m)).First()
+                    : g.OrderByDescending(s => s.DistanceKm)
+                        .ThenByDescending(s => s.DurationMinutes)
+                        .ThenByDescending(s => s.Date)
+                        .First();
+
+                double? speed = (best.DistanceKm.HasValue && best.DurationMinutes is > 0)
+                    ? Math.Round((double)(best.DistanceKm!.Value / (best.DurationMinutes!.Value / 60m)), 2)
+                    : null;
+
+                return new PersonalRecordIndexViewModel
+                {
+                    ExerciseName    = best.ExerciseName,
+                    MuscleGroup     = best.MuscleGroup.ToString(),
+                    IsCardio        = true,
+                    DistanceKm      = best.DistanceKm,
+                    DurationMinutes = best.DurationMinutes,
+                    SpeedKmh        = speed,
+                    Date            = best.Date
+                };
             })
             .OrderBy(s => s.ExerciseName)
             .ToList();

@@ -9,7 +9,7 @@
 </div>
 
 <p class="text-muted mb-4">
-    Your best performance per exercise, derived from all logged workouts.
+    Your best performance per exercise across all logged workouts.
 </p>
 
 @if (!Model.StrengthRecords.Any() && !Model.CardioRecords.Any())
@@ -27,7 +27,7 @@ else
     @if (Model.StrengthRecords.Any())
     {
         <div class="card mb-4">
-            <div class="card-header fw-semibold">🏋️ Strength Records</div>
+            <div class="card-header fw-semibold">🏋️ Strength Records — Best Weight per Exercise</div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="table-light">
@@ -45,7 +45,16 @@ else
                             <tr>
                                 <td class="fw-medium">@pr.ExerciseName</td>
                                 <td><span class="badge bg-secondary">@pr.MuscleGroup</span></td>
-                                <td class="fw-bold text-primary">@pr.WeightKg kg</td>
+                                <td>
+                                    @if (pr.WeightKg > 0)
+                                    {
+                                        <span class="fw-bold text-primary">@pr.WeightKg kg</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Bodyweight</span>
+                                    }
+                                </td>
                                 <td>@(pr.Reps.HasValue ? pr.Reps.ToString() : "—")</td>
                                 <td class="text-muted">@pr.Date.ToString("dd MMM yyyy")</td>
                             </tr>
@@ -60,13 +69,14 @@ else
     @if (Model.CardioRecords.Any())
     {
         <div class="card mb-4">
-            <div class="card-header fw-semibold">🏃 Cardio Records</div>
+            <div class="card-header fw-semibold">🏃 Cardio Records — Best Speed per Exercise</div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Exercise</th>
-                            <th>Best Distance</th>
+                            <th>Best Speed</th>
+                            <th>Distance</th>
                             <th>Duration</th>
                             <th>Date</th>
                         </tr>
@@ -76,7 +86,17 @@ else
                         {
                             <tr>
                                 <td class="fw-medium">@pr.ExerciseName</td>
-                                <td class="fw-bold text-success">@(pr.DistanceKm.HasValue ? $"{pr.DistanceKm} km" : "—")</td>
+                                <td>
+                                    @if (pr.SpeedKmh.HasValue)
+                                    {
+                                        <span class="fw-bold text-success">@pr.SpeedKmh km/h</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>@(pr.DistanceKm.HasValue ? $"{pr.DistanceKm} km" : "—")</td>
                                 <td>@(pr.DurationMinutes.HasValue ? $"{pr.DurationMinutes} min" : "—")</td>
                                 <td class="text-muted">@pr.Date.ToString("dd MMM yyyy")</td>
                             </tr>

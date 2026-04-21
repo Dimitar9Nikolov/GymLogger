@@ -1,5 +1,6 @@
 using GymLogger.Data;
 using GymLogger.Models;
+using GymLogger.Models.Enums;
 using GymLogger.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -44,19 +45,69 @@ public class DashboardController : Controller
             })
             .ToListAsync();
 
-        var recentPRs = await _context.PersonalRecords
-            .Where(pr => pr.UserId == userId)
-            .OrderByDescending(pr => pr.AchievedOn)
-            .Take(5)
-            .Select(pr => new PersonalRecordViewModel
+        // Derive PRs from WorkoutSets (PersonalRecords table is not auto-populated)
+        var allSets = await _context.WorkoutSets
+            .Where(s => s.WorkoutExercise.Workout.UserId == userId)
+            .Select(s => new
             {
-                Id = pr.Id,
-                ExerciseName = pr.Exercise.Name,
-                WeightKg = pr.WeightKg,
-                Reps = pr.Reps,
-                AchievedOn = pr.AchievedOn
+                ExerciseId      = s.WorkoutExercise.ExerciseId,
+                ExerciseName    = s.WorkoutExercise.Exercise.Name,
+                IsCardio        = s.WorkoutExercise.Exercise.MuscleGroup == MuscleGroup.Cardio,
+                WeightKg        = s.WeightKg,
+                Reps            = s.Reps,
+                DistanceKm      = s.DistanceKm,
+                DurationMinutes = s.DurationMinutes,
+                Date            = s.WorkoutExercise.Workout.Date
             })
             .ToListAsync();
+
+        // Best weight per strength exercise
+        var strengthPRs = allSets
+            .Where(s => !s.IsCardio)
+            .GroupBy(s => s.ExerciseId)
+            .Select(g =>
+            {
+                var best = g.OrderByDescending(s => s.WeightKg ?? 0m).ThenByDescending(s => s.Date).First();
+                return new PersonalRecordViewModel
+                {
+                    ExerciseName = best.ExerciseName,
+                    IsCardio     = false,
+                    WeightKg     = best.WeightKg ?? 0m,
+                    Reps         = best.Reps,
+                    AchievedOn   = best.Date
+                };
+            });
+
+        // Best speed (or distance) per cardio exercise
+        var cardioPRs = allSets
+            .Where(s => s.IsCardio)
+            .GroupBy(s => s.ExerciseId)
+            .Select(g =>
+            {
+                var withSpeed = g.Where(s => s.DistanceKm.HasValue && s.DurationMinutes is > 0).ToList();
+                var best = withSpeed.Any()
+                    ? withSpeed.OrderByDescending(s => s.DistanceKm!.Value / (s.DurationMinutes!.Value / 60m)).First()
+                    : g.OrderByDescending(s => s.DistanceKm).ThenByDescending(s => s.Date).First();
+
+                double? speed = (best.DistanceKm.HasValue && best.DurationMinutes is > 0)
+                    ? Math.Round((double)(best.DistanceKm!.Value / (best.DurationMinutes!.Value / 60m)), 2)
+                    : null;
+
+                return new PersonalRecordViewModel
+                {
+                    ExerciseName    = best.ExerciseName,
+                    IsCardio        = true,
+                    DistanceKm      = best.DistanceKm,
+                    DurationMinutes = best.DurationMinutes,
+                    SpeedKmh        = speed,
+                    AchievedOn      = best.Date
+                };
+            });
+
+        var recentPRs = strengthPRs.Concat(cardioPRs)
+            .OrderByDescending(pr => pr.AchievedOn)
+            .Take(5)
+            .ToList();
 
         var activeProgram = await _context.UserPrograms
             .Where(up => up.UserId == userId && up.IsActive)

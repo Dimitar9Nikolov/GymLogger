@@ -147,9 +147,18 @@
                                     <div class="fw-medium">@pr.ExerciseName</div>
                                     <small class="text-muted">@pr.AchievedOn.ToString("MMM d, yyyy")</small>
                                 </div>
-                                <span class="badge bg-warning text-dark ms-2 align-self-center">
-                                    @pr.WeightKg kg &times; @pr.Reps
-                                </span>
+                                @if (pr.IsCardio)
+                                {
+                                    <span class="badge bg-success ms-2 align-self-center">
+                                        @(pr.SpeedKmh.HasValue ? $"{pr.SpeedKmh} km/h" : pr.DistanceKm.HasValue ? $"{pr.DistanceKm} km" : $"{pr.DurationMinutes} min")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark ms-2 align-self-center">
+                                        @(pr.WeightKg > 0 ? $"{pr.WeightKg} kg" : "BW")@(pr.Reps.HasValue ? $" × {pr.Reps}" : "")
+                                    </span>
+                                }
                             </li>
                         }
                     </ul>

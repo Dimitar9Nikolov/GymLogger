@@ -7,12 +7,13 @@ public class PersonalRecordIndexViewModel
     public bool IsCardio { get; set; }
 
     // Strength
-    public decimal? WeightKg { get; set; }
+    public decimal WeightKg { get; set; }
     public int? Reps { get; set; }
 
     // Cardio
     public decimal? DistanceKm { get; set; }
     public int? DurationMinutes { get; set; }
+    public double? SpeedKmh { get; set; }   // calculated: km/h
 
     public DateTime Date { get; set; }
 }
