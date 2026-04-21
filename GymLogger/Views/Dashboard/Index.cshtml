@@ -52,6 +52,143 @@
     </div>
 </div>
 
+<!-- ── This Week ─────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+    <!-- Workout goal -->
+    <div class="col-12 col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">🎯 Weekly Workout Goal</span>
+                <button class="btn btn-sm btn-outline-secondary" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#goalForm" aria-expanded="false">
+                    Edit
+                </button>
+            </div>
+            <div class="card-body">
+                @{
+                    var goal    = Model.WeeklyWorkoutGoal ?? 0;
+                    var done    = Model.WorkoutsThisWeek;
+                    var pct     = goal > 0 ? Math.Min(100, (int)Math.Round(done * 100.0 / goal)) : 0;
+                    var barCls  = pct >= 100 ? "bg-success" : pct >= 60 ? "bg-warning" : "bg-primary";
+                }
+
+                @if (goal > 0)
+                {
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-medium">@done / @goal workouts</span>
+                        <span class="text-muted small">@pct%</span>
+                    </div>
+                    <div class="progress mb-3" style="height:14px">
+                        <div class="progress-bar @barCls" role="progressbar"
+                             style="width:@pct%" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    @if (pct >= 100)
+                    {
+                        <div class="alert alert-success py-1 px-2 mb-2 small text-center">🏆 Goal reached!</div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">Set a weekly goal to track your consistency.</p>
+                }
+
+                <div class="collapse @(goal == 0 ? "show" : "")" id="goalForm">
+                    <form asp-action="SetWeeklyGoal" asp-controller="Dashboard" method="post" class="d-flex gap-2 mt-1">
+                        @Html.AntiForgeryToken()
+                        <input type="number" name="goal" class="form-control form-control-sm"
+                               min="1" max="30" value="@(goal > 0 ? goal : 5)" style="width:80px" />
+                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    </form>
+                </div>
+
+                <div class="mt-3 text-muted small">
+                    Last week: <strong>@Model.WorkoutsLastWeek</strong> workout@(Model.WorkoutsLastWeek == 1 ? "" : "s")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strength volume -->
+    <div class="col-12 col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">🏋️ Strength Volume This Week</div>
+            <div class="card-body">
+                @{
+                    var kgThis  = Model.TotalKgThisWeek;
+                    var kgLast  = Model.TotalKgLastWeek;
+                    var kgDiff  = kgThis - kgLast;
+                    var kgArrow = kgDiff > 0 ? "↑" : kgDiff < 0 ? "↓" : "→";
+                    var kgColor = kgDiff > 0 ? "text-success" : kgDiff < 0 ? "text-danger" : "text-muted";
+                }
+                <div class="display-6 fw-bold text-primary mb-1">
+                    @kgThis.ToString("N0") <small class="fs-6 text-muted">kg</small>
+                </div>
+                <div class="small text-muted mb-3">Total weight × reps across all sets</div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="@kgColor fw-semibold">@kgArrow @Math.Abs(kgDiff).ToString("N0") kg</span>
+                    <span class="text-muted small">vs last week (@kgLast.ToString("N0") kg)</span>
+                </div>
+
+                @if (kgThis == 0 && kgLast == 0)
+                {
+                    <p class="text-muted small mt-2 mb-0">Log a strength workout to see your volume.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Cardio -->
+    <div class="col-12 col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">🏃 Cardio This Week</div>
+            <div class="card-body">
+                @{
+                    var kmThis    = Model.CardioKmThisWeek;
+                    var kmLast    = Model.CardioKmLastWeek;
+                    var minsThis  = Model.CardioMinsThisWeek;
+                    var minsLast  = Model.CardioMinsLastWeek;
+                    var kmDiff    = kmThis - kmLast;
+                    var minsDiff  = minsThis - minsLast;
+                    var kmArrow   = kmDiff > 0 ? "↑" : kmDiff < 0 ? "↓" : "→";
+                    var minsArrow = minsDiff > 0 ? "↑" : minsDiff < 0 ? "↓" : "→";
+                    var kmColor   = kmDiff > 0 ? "text-success" : kmDiff < 0 ? "text-danger" : "text-muted";
+                    var minsColor = minsDiff > 0 ? "text-success" : minsDiff < 0 ? "text-danger" : "text-muted";
+                }
+
+                <div class="row text-center mb-3">
+                    <div class="col-6 border-end">
+                        <div class="display-6 fw-bold text-success">@kmThis.ToString("N1")</div>
+                        <div class="text-muted small">km</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="display-6 fw-bold text-info">@minsThis</div>
+                        <div class="text-muted small">min</div>
+                    </div>
+                </div>
+
+                <div class="small d-flex flex-column gap-1">
+                    <div>
+                        <span class="@kmColor fw-semibold">@kmArrow @Math.Abs(kmDiff).ToString("N1") km</span>
+                        <span class="text-muted"> vs last week (@kmLast.ToString("N1") km)</span>
+                    </div>
+                    <div>
+                        <span class="@minsColor fw-semibold">@minsArrow @Math.Abs(minsDiff) min</span>
+                        <span class="text-muted"> vs last week (@minsLast min)</span>
+                    </div>
+                </div>
+
+                @if (kmThis == 0 && minsThis == 0)
+                {
+                    <p class="text-muted small mt-2 mb-0">Log a cardio session to see your stats.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ── / This Week ───────────────────────────────────────────── -->
+
 <div class="row g-4">
     <!-- Recent Workouts -->
     <div class="col-lg-7">

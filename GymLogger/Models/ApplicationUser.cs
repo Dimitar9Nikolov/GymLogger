@@ -15,6 +15,7 @@ public class ApplicationUser : IdentityUser
     [MaxLength(500)]
     public string? Bio { get; set; }
     public DateTime CreatedOn { get; set; }
+    public int? WeeklyWorkoutGoal { get; set; }
 
     public ICollection<Workout> Workouts { get; set; } = new List<Workout>();
     public ICollection<TrainingProgram> TrainingPrograms { get; set; } = new List<TrainingProgram>();

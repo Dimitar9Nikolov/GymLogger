@@ -21,6 +21,19 @@ public class DashboardController : Controller
         _userManager = userManager;
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetWeeklyGoal(int goal)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user != null)
+        {
+            user.WeeklyWorkoutGoal = Math.Max(1, Math.Min(goal, 30));
+            await _userManager.UpdateAsync(user);
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
     public async Task<IActionResult> Index()
     {
         var userId = _userManager.GetUserId(User)!;
@@ -109,6 +122,59 @@ public class DashboardController : Controller
             .Take(5)
             .ToList();
 
+        // Weekly date ranges (Mon–Sun)
+        var today = DateTime.Today;
+        int daysFromMonday = ((int)today.DayOfWeek + 6) % 7;
+        var thisWeekStart = today.AddDays(-daysFromMonday);
+        var lastWeekStart = thisWeekStart.AddDays(-7);
+        var lastWeekEnd   = thisWeekStart;
+        var nextWeekStart = thisWeekStart.AddDays(7);
+
+        // Workouts this week / last week
+        var workoutsThisWeek = await _context.Workouts
+            .CountAsync(w => w.UserId == userId && w.Date >= thisWeekStart && w.Date < nextWeekStart);
+        var workoutsLastWeek = await _context.Workouts
+            .CountAsync(w => w.UserId == userId && w.Date >= lastWeekStart && w.Date < lastWeekEnd);
+
+        // Strength sets this week / last week (non-cardio with WeightKg)
+        var setsThisWeek = await _context.WorkoutSets
+            .Where(s => s.WorkoutExercise.Workout.UserId == userId
+                     && s.WorkoutExercise.Exercise.MuscleGroup != MuscleGroup.Cardio
+                     && s.WorkoutExercise.Workout.Date >= thisWeekStart
+                     && s.WorkoutExercise.Workout.Date < nextWeekStart
+                     && s.WeightKg != null && s.Reps != null)
+            .Select(s => new { WeightKg = s.WeightKg!.Value, Reps = s.Reps!.Value })
+            .ToListAsync();
+
+        var setsLastWeek = await _context.WorkoutSets
+            .Where(s => s.WorkoutExercise.Workout.UserId == userId
+                     && s.WorkoutExercise.Exercise.MuscleGroup != MuscleGroup.Cardio
+                     && s.WorkoutExercise.Workout.Date >= lastWeekStart
+                     && s.WorkoutExercise.Workout.Date < lastWeekEnd
+                     && s.WeightKg != null && s.Reps != null)
+            .Select(s => new { WeightKg = s.WeightKg!.Value, Reps = s.Reps!.Value })
+            .ToListAsync();
+
+        var totalKgThisWeek = setsThisWeek.Sum(s => s.WeightKg * s.Reps);
+        var totalKgLastWeek = setsLastWeek.Sum(s => s.WeightKg * s.Reps);
+
+        // Cardio sets this week / last week
+        var cardioThisWeek = await _context.WorkoutSets
+            .Where(s => s.WorkoutExercise.Workout.UserId == userId
+                     && s.WorkoutExercise.Exercise.MuscleGroup == MuscleGroup.Cardio
+                     && s.WorkoutExercise.Workout.Date >= thisWeekStart
+                     && s.WorkoutExercise.Workout.Date < nextWeekStart)
+            .Select(s => new { DistanceKm = s.DistanceKm ?? 0m, DurationMinutes = s.DurationMinutes ?? 0 })
+            .ToListAsync();
+
+        var cardioLastWeek = await _context.WorkoutSets
+            .Where(s => s.WorkoutExercise.Workout.UserId == userId
+                     && s.WorkoutExercise.Exercise.MuscleGroup == MuscleGroup.Cardio
+                     && s.WorkoutExercise.Workout.Date >= lastWeekStart
+                     && s.WorkoutExercise.Workout.Date < lastWeekEnd)
+            .Select(s => new { DistanceKm = s.DistanceKm ?? 0m, DurationMinutes = s.DurationMinutes ?? 0 })
+            .ToListAsync();
+
         var activeProgram = await _context.UserPrograms
             .Where(up => up.UserId == userId && up.IsActive)
             .Select(up => new ActiveProgramViewModel
@@ -132,7 +198,19 @@ public class DashboardController : Controller
             TotalExercisesLogged = totalExercisesLogged,
             RecentWorkouts = recentWorkouts,
             RecentPersonalRecords = recentPRs,
-            ActiveProgram = activeProgram
+            ActiveProgram = activeProgram,
+
+            WeeklyWorkoutGoal   = user?.WeeklyWorkoutGoal,
+            WorkoutsThisWeek    = workoutsThisWeek,
+            WorkoutsLastWeek    = workoutsLastWeek,
+
+            TotalKgThisWeek     = totalKgThisWeek,
+            TotalKgLastWeek     = totalKgLastWeek,
+
+            CardioKmThisWeek    = cardioThisWeek.Sum(s => s.DistanceKm),
+            CardioKmLastWeek    = cardioLastWeek.Sum(s => s.DistanceKm),
+            CardioMinsThisWeek  = cardioThisWeek.Sum(s => s.DurationMinutes),
+            CardioMinsLastWeek  = cardioLastWeek.Sum(s => s.DurationMinutes)
         };
 
         return View(viewModel);

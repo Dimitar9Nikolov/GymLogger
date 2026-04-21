@@ -98,6 +98,9 @@ namespace GymLogger.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<int?>("WeeklyWorkoutGoal")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedEmail")
@@ -400,13 +403,20 @@ namespace GymLogger.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Reps")
+                    b.Property<decimal?>("DistanceKm")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Reps")
                         .HasColumnType("int");
 
                     b.Property<int>("SetNumber")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("WeightKg")
+                    b.Property<decimal?>("WeightKg")
                         .HasPrecision(6, 2)
                         .HasColumnType("decimal(6,2)");
 
